@@ -165,12 +165,51 @@ const App: React.FC = () => {
     return url;
   };
 
-  const handleCopyLink = () => {
+  const handleCopyLink = async () => {
     const url = generateLink();
-    navigator.clipboard.writeText(url).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
+    
+    // Fallback function for non-secure contexts (like file://)
+    const fallbackCopy = (text: string) => {
+         const textArea = document.createElement("textarea");
+         textArea.value = text;
+         
+         // Ensure textarea is not visible but part of DOM
+         textArea.style.position = "fixed";
+         textArea.style.left = "-9999px";
+         textArea.style.top = "0";
+         
+         document.body.appendChild(textArea);
+         textArea.focus();
+         textArea.select();
+         
+         try {
+            const successful = document.execCommand('copy');
+            if (successful) {
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+            } else {
+                console.warn("Fallback copy unsuccessful");
+            }
+         } catch (err) {
+             console.error('Fallback copy failed', err);
+         }
+         
+         document.body.removeChild(textArea);
+    };
+
+    if (!navigator.clipboard) {
+        fallbackCopy(url);
+        return;
+    }
+
+    try {
+        await navigator.clipboard.writeText(url);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+        console.warn('Clipboard API failed (likely due to non-secure context), using fallback', err);
+        fallbackCopy(url);
+    }
   };
 
   const handleShowQR = () => {
@@ -310,11 +349,7 @@ const App: React.FC = () => {
       <div className="flex flex-wrap justify-center gap-4 w-full max-w-[480px]">
         <button
           onClick={handleCopyLink}
-          disabled={!!gameResult}
-          className={`flex-1 min-w-[140px] flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-semibold transition-all shadow-lg 
-            ${gameResult 
-              ? 'bg-slate-700 text-slate-500 cursor-not-allowed' 
-              : 'bg-emerald-600 hover:bg-emerald-500 text-white active:scale-95 shadow-emerald-900/20'}`}
+          className="flex-1 min-w-[140px] flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-semibold transition-all shadow-lg bg-emerald-600 hover:bg-emerald-500 text-white active:scale-95 shadow-emerald-900/20"
         >
           {copied ? <Check size={20} /> : <Share2 size={20} />}
           {copied ? 'Copiato!' : 'Copia Link'}
@@ -322,11 +357,7 @@ const App: React.FC = () => {
 
         <button
           onClick={handleShowQR}
-           disabled={!!gameResult}
-          className={`flex-1 min-w-[140px] flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-semibold transition-all shadow-lg
-            ${gameResult 
-              ? 'bg-slate-700 text-slate-500 cursor-not-allowed' 
-              : 'bg-indigo-600 hover:bg-indigo-500 text-white active:scale-95 shadow-indigo-900/20'}`}
+          className="flex-1 min-w-[140px] flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-semibold transition-all shadow-lg bg-indigo-600 hover:bg-indigo-500 text-white active:scale-95 shadow-indigo-900/20"
         >
           <QrCode size={20} />
           Genera QR
