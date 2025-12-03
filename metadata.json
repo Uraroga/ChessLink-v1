@@ -1,0 +1,5 @@
+{
+  "name": "ChessLink - Serverless Chess",
+  "description": "A modern, serverless chess application that allows remote play via URL sharing. Features drag-and-drop gameplay, FEN state management, and QR code sharing.",
+  "requestFramePermissions": []
+}
